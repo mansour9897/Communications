@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO.Ports;
 
 namespace Communications
@@ -6,9 +7,17 @@ namespace Communications
     public class SerialComminucation : ICommunication
     {
         private readonly SerialPort _port;
-        private readonly Action _dataRecieved;
 
+        public event ICommunication.MessageReceivedHandler? MessageReceived;
 
+        public SerialComminucation()
+        {
+            string[]? ports = SerialPort.GetPortNames();
+            _port = new SerialPort();
+            if (ports.Length > 0)
+                _port.PortName = ports[0];
+            _port.BaudRate = 9600;
+        }
         public SerialComminucation(string portName, int buad, Action dataRecieved)
         {
             _port = new SerialPort(portName, buad);
@@ -16,18 +25,16 @@ namespace Communications
             _port.ReadTimeout = 1000;
             _port.WriteTimeout = 1000;
 
-            _dataRecieved = dataRecieved;
-
             _port.DataReceived += _port_DataReceived;
         }
 
         private void _port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            _dataRecieved();
+            string msg = Read();
+            MessageReceived?.Invoke(this, msg);
         }
 
         public bool IsConnected => _port.IsOpen;
-
 
         public bool Connect()
         {
@@ -36,8 +43,9 @@ namespace Communications
                 _port.Open();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine(ex.Message);
                 return false;
             }
             finally
@@ -47,16 +55,24 @@ namespace Communications
 
         public string Read()
         {
-            string res = "";
+            if (_port.IsOpen == false)
+            {
+                if (!Connect())
+                {
+                    return "";
+                }
+            }
 
-            return res;
+            return _port.ReadLine();
         }
-
-
 
         public void Write(string data)
         {
-            if (_port.IsOpen == false) Connect();
+            if (_port.IsOpen == false)
+            {
+                if (!Connect()) return;
+            }
+
             _port.WriteLine(data);
         }
     }
