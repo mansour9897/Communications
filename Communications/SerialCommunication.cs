@@ -56,6 +56,8 @@ namespace Communications
 
         public bool Connect()
         {
+            if (_port.IsOpen) return true;
+
             try
             {
                 _port.Open();
