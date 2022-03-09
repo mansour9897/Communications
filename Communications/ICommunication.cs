@@ -10,5 +10,8 @@ namespace Communications
         bool Connect();
         void Write(string data);
         string Read();
+
+        void ChangeSetting(ICommunicationSetting setting);
+
     }
 }

@@ -75,5 +75,19 @@ namespace Communications
 
             _port.WriteLine(data);
         }
+
+        public void ChangeSetting(ICommunicationSetting setting)
+        {
+            try
+            {
+                SerialSetting st = (SerialSetting)setting;
+                _port.BaudRate = st.Baudrate;
+                _port.PortName = st.PortName;
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
     }
 }
