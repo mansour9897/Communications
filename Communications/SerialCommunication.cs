@@ -16,7 +16,7 @@ namespace Communications
             string[]? ports = SerialPort.GetPortNames();
             _port = new SerialPort();
             if (ports.Length > 0)
-                _port.PortName = "COM3";//ports[0];
+                _port.PortName = ports[0];
             _port.BaudRate = 115200;
 
             Thread trd = new Thread(backWork);
