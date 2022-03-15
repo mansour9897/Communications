@@ -84,7 +84,7 @@ namespace Communications
             }
             try
             {
-                return _port.ReadLine();
+                return _port.ReadLine().Trim();
 
             }
             catch (Exception ex)
@@ -105,7 +105,7 @@ namespace Communications
                 if (!Connect()) return;
             }
 
-            _port.WriteLine(data);
+            _port.Write(data);
 
         }
 
