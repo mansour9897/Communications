@@ -3,11 +3,14 @@ using System.Threading;
 
 namespace Communications.DeviceCommand
 {
-    class DeviceCommand : IDeviceCommand
+    public class DeviceCommand : IDeviceCommand
     {
         private readonly string _commandCode;
         private readonly string _confirmationCode;
         private readonly ICommunication _com;
+
+        delegate void CommandConfirmedHandler(string confirmationCode, string value);
+        event CommandConfirmedHandler? CommandConfirmed;
 
         public DeviceCommand(string code, string confirmCode, ICommunication com)
         {
