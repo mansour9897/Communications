@@ -9,8 +9,8 @@ namespace Communications.DeviceCommand
         private readonly string _confirmationCode;
         private readonly ICommunication _com;
 
-        delegate void CommandConfirmedHandler(string confirmationCode, string value);
-        event CommandConfirmedHandler? CommandConfirmed;
+        public delegate void CommandConfirmedHandler(string confirmationCode, string value);
+        public event CommandConfirmedHandler? CommandConfirmed;
 
         public DeviceCommand(string code, string confirmCode, ICommunication com)
         {
