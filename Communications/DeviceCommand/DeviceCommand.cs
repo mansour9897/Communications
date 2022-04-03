@@ -25,6 +25,9 @@ namespace Communications.DeviceCommand
             if (!(message.IndexOf(ConfirmationCode) < 0))
             {
                 ExecuteConfirmed = true;
+                
+                string val = message.Split('\t')[1];
+                CommandConfirmed?.Invoke(ConfirmationCode, val);
             }
         }
 
