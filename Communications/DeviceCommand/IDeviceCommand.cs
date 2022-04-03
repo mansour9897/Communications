@@ -1,6 +1,6 @@
 ﻿namespace Communications.DeviceCommand
 {
-    interface IDeviceCommand
+    public interface IDeviceCommand
     {
         string CommandCode { get; }
         bool ExecuteConfirmed { get; set; }
