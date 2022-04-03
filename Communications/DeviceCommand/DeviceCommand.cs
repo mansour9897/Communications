@@ -44,6 +44,8 @@ namespace Communications.DeviceCommand
 
         public string ConfirmationCode => _confirmationCode;
 
+        public bool ExecuteFinished { get; set; }
+
         public void Execute()
         {
             ExecuteConfirmed = false;
@@ -57,6 +59,7 @@ namespace Communications.DeviceCommand
                 if (stopwatch.Elapsed.TotalMilliseconds > 3000)
                     break;
             }
+            ExecuteFinished = true;
         }
     }
 }
