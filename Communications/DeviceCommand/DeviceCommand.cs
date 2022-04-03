@@ -3,11 +3,14 @@ using System.Threading;
 
 namespace Communications.DeviceCommand
 {
-    class DeviceCommand : IDeviceCommand
+    public class DeviceCommand : IDeviceCommand
     {
         private readonly string _commandCode;
         private readonly string _confirmationCode;
         private readonly ICommunication _com;
+
+        public delegate void CommandConfirmedHandler(string confirmationCode, string value);
+        public event CommandConfirmedHandler? CommandConfirmed;
 
         public DeviceCommand(string code, string confirmCode, ICommunication com)
         {
@@ -22,6 +25,9 @@ namespace Communications.DeviceCommand
             if (!(message.IndexOf(ConfirmationCode) < 0))
             {
                 ExecuteConfirmed = true;
+                
+                string val = message.Split('\t')[1];
+                CommandConfirmed?.Invoke(ConfirmationCode, val);
             }
         }
 
@@ -38,6 +44,8 @@ namespace Communications.DeviceCommand
 
         public string ConfirmationCode => _confirmationCode;
 
+        public bool ExecuteFinished { get; set; }
+
         public void Execute()
         {
             ExecuteConfirmed = false;
@@ -51,6 +59,7 @@ namespace Communications.DeviceCommand
                 if (stopwatch.Elapsed.TotalMilliseconds > 3000)
                     break;
             }
+            ExecuteFinished = true;
         }
     }
 }
