@@ -30,25 +30,27 @@ namespace Communications
                 ReadTimeout = 1000,
                 WriteTimeout = 1000
             };
-
-            //_port.DataReceived += new SerialDataReceivedEventHandler(_port_DataReceived);
+            _port.DtrEnable = true;
+            _port.RtsEnable = true;
+            _port.DataReceived += new SerialDataReceivedEventHandler(_port_DataReceived);
 
             Thread trd = new Thread(backWork);
             trd.IsBackground = true;
-            trd.Start();
+            //trd.Start();
         }
 
-        //private void _port_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        //{
-        //    string msg = Read();
-        //    MessageReceived?.Invoke(this, msg);
-        //}
+        private void _port_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            string msg = Read();
+            // Console.WriteLine("Received: " + msg);
+            MessageReceived?.Invoke(this, msg);
+        }
 
         private void backWork()
         {
             while (true)
             {
-                string msg = Read();
+                string msg = "!00";//Read();
                 MessageReceived?.Invoke(this, msg);
             }
         }
@@ -103,9 +105,22 @@ namespace Communications
             if (_port.IsOpen == false)
             {
                 if (!Connect()) return;
+                Debug.WriteLine("Connected");
             }
 
-            _port.Write(data);
+            try
+            {
+                _port.WriteLine(data);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            finally
+            {
+
+            }
+            //_port.WriteLine(data);
 
         }
 
