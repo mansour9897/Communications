@@ -25,9 +25,17 @@ namespace Communications.DeviceCommand
             if (!(message.IndexOf(ConfirmationCode) < 0))
             {
                 ExecuteConfirmed = true;
-                
-                string val = message.Split('\t')[1];
-                CommandConfirmed?.Invoke(ConfirmationCode, val);
+
+                string[] splited = message.Split('\t');
+                if (splited.Length > 1)
+                {
+                    string val = message.Split('\t')[1];
+                    CommandConfirmed?.Invoke(ConfirmationCode, splited[1]);
+                }
+                else
+                {
+                    CommandConfirmed?.Invoke(ConfirmationCode, "");
+                }
             }
         }
 
@@ -54,7 +62,7 @@ namespace Communications.DeviceCommand
             while (!ExecuteConfirmed)
             {
                 _com.Write(_commandCode);
-                Thread.Sleep(10);
+                Thread.Sleep(100);
 
                 if (stopwatch.Elapsed.TotalMilliseconds > 3000)
                     break;
