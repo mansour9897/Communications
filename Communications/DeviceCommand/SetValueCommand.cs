@@ -1,6 +1,6 @@
 ﻿namespace Communications.DeviceCommand
 {
-    class SetValueCommand : DeviceCommand
+    public class SetValueCommand : DeviceCommand
     {
         public SetValueCommand(string _opcode,string _confirmCode,double val,ICommunication com):
             base(GetCode(val,_opcode),GetConfirmCode(val,_confirmCode),com)

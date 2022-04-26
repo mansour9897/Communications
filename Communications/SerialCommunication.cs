@@ -41,8 +41,10 @@ namespace Communications
 
         private void _port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
+            Thread.Sleep(10);
             string msg = Read();
             // Console.WriteLine("Received: " + msg);
+            Debug.WriteLine("Received: " + msg);
             MessageReceived?.Invoke(this, msg);
         }
 
@@ -86,7 +88,9 @@ namespace Communications
             }
             try
             {
-                return _port.ReadLine().Trim();
+                string msg = _port.ReadLine();
+                Debug.WriteLine("Read: " + msg);
+                return msg.Trim();
 
             }
             catch (Exception ex)
@@ -110,7 +114,8 @@ namespace Communications
 
             try
             {
-                _port.WriteLine(data);
+                _port.Write(data);
+                Debug.WriteLine("Sent: " + data);
             }
             catch (Exception ex)
             {
@@ -132,6 +137,7 @@ namespace Communications
                 _port.Close();
                 _port.BaudRate = st.Baudrate;
                 _port.PortName = st.PortName;
+                _port.DataReceived += new SerialDataReceivedEventHandler(_port_DataReceived);
             }
             catch (Exception ex)
             {
