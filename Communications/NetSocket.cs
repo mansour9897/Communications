@@ -12,6 +12,10 @@ namespace Communications
 {
     public class NetSocket : ICommunication
     {
+        const char ETX = (char)'\n';
+        //start response
+        const char STX = (char)'!';
+
         #region varables
         private readonly int _portNumber;
         private readonly string _hostIp;
@@ -35,12 +39,14 @@ namespace Communications
         {
             _portNumber = 8080;
             _hostIp = "192.168.1.240";
+            Connect();
         }
 
         public NetSocket(string hostIp, int portNumber)
         {
             _portNumber = portNumber;
             _hostIp = hostIp;
+            Connect();
         }
 
         public void ChangeSetting(ICommunicationSetting setting)
@@ -174,9 +180,34 @@ namespace Communications
         protected virtual void RaiseMessageReceived(string message)
         {
             recivedMsg = message;
-            MessageReceived?.Invoke(this, message);
+            //MessageReceived?.Invoke(this, message);
+            ProcessBuffer(Encoding.ASCII.GetBytes(recivedMsg), recivedMsg.Length);
         }
 
+        private void ProcessBuffer(byte[] buffer, int length)
+        {
+
+            List<byte>? message = null;
+            for (int i = 0; i < length; i++)
+            {
+                if (buffer[i] == ETX)
+                {
+                    if (message != null)
+                    {
+                        MessageReceived?.Invoke(this, Encoding.ASCII.GetString(message.ToArray()));
+                        message = null;
+                    }
+                }
+                else if (buffer[i] == STX)
+                {
+                    message = new List<byte>();
+                    message.Add(buffer[i]);
+                }
+
+                else if (message != null)
+                    message.Add(buffer[i]);
+            }
+        }
         private void SendCallback(IAsyncResult ar)
         {
             try
