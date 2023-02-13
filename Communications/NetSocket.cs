@@ -1,22 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Communications
 {
     public class NetSocket : ICommunication
     {
+        const char ETX = (char)'\n';
+        //start response
+        const char STX = (char)'!';
+
         #region varables
         private readonly int _portNumber;
         private readonly string _hostIp;
         private static Socket? _client;
-        public bool IsConnected => _client is null ? false :  _client.Connected;
+        public bool IsConnected => _client is null ? false : _client.Connected;
 
         // ManualResetEvent instances signal completion.  
         private static ManualResetEvent connectDone =
@@ -31,16 +30,21 @@ namespace Communications
         private string recivedMsg = "";
         #endregion
 
+        private Stopwatch stopwatch;
+
         public NetSocket()
         {
             _portNumber = 8080;
-            _hostIp = "192.168.1.240";
+            _hostIp = "192.168.16.254";
+            Connect();
+            stopwatch = new Stopwatch();
         }
 
         public NetSocket(string hostIp, int portNumber)
         {
             _portNumber = portNumber;
             _hostIp = hostIp;
+            Connect();
         }
 
         public void ChangeSetting(ICommunicationSetting setting)
@@ -65,13 +69,13 @@ namespace Communications
                     new AsyncCallback(ConnectCallback), _client);
                 connectDone.WaitOne(2500);
 
-                // Create the state object.  
-                StateObject state = new StateObject();
-                state.workSocket = _client;
+                //// Create the state object.  
+                //StateObject state = new StateObject();
+                //state.workSocket = _client;
 
-                // Begin receiving the data from the remote device.  
-                _client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveCallback), state);
+                //// Begin receiving the data from the remote device.  
+                //_client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                //    new AsyncCallback(ReceiveCallback), state);
 
                 return true;
             }
@@ -89,6 +93,7 @@ namespace Communications
 
         public void Write(string data)
         {
+            stopwatch.Restart();
             // Convert the string data to byte data using ASCII encoding.  
             byte[] byteData = Encoding.ASCII.GetBytes(data);
 
@@ -98,15 +103,43 @@ namespace Communications
                 // Begin sending the data to the remote device.  
                 _ = _client.BeginSend(byteData, 0, byteData.Length, 0,
                     new AsyncCallback(SendCallback), _client);
+
                 sendDone.WaitOne(2000);
+
+                Receive(_client);
+                receiveDone.WaitOne();
             }
             catch
             {
                 Debug.WriteLine("Send data failed.");
             }
+
         }
 
         #region private methods
+        private void Receive(Socket? client)
+        {
+            Debug.WriteLine(string.Format("T : {0:0.0} Receive Started. ", stopwatch.ElapsedMilliseconds));
+
+            try
+            {
+                // Create the state object.  
+                StateObject state = new StateObject();
+                state.workSocket = client;
+
+                if (client is null) return;
+                // Begin receiving the data from the remote device.  
+                _ = client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReceiveCallback), state);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            Debug.WriteLine(string.Format("T : {0:0.0} Receive End. ", stopwatch.ElapsedMilliseconds));
+
+        }
         private void ConnectCallback(IAsyncResult ar)
         {
             try
@@ -132,6 +165,8 @@ namespace Communications
 
         private void ReceiveCallback(IAsyncResult ar)
         {
+            Debug.WriteLine(string.Format("T : {0:0.0} Receive callback started. ", stopwatch.ElapsedMilliseconds));
+
             try
             {
                 // Retrieve the state object and the client socket
@@ -160,6 +195,8 @@ namespace Communications
                         RaiseMessageReceived(content);
                     }
 
+                    Debug.WriteLine(string.Format("T : {0:0.0} Receive callback ended. ", stopwatch.ElapsedMilliseconds));
+
                     // Get the rest of the data.  
                     client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                       new AsyncCallback(ReceiveCallback), state);
@@ -169,16 +206,43 @@ namespace Communications
             {
                 Debug.WriteLine(e.ToString());
             }
+
         }
 
         protected virtual void RaiseMessageReceived(string message)
         {
             recivedMsg = message;
-            MessageReceived?.Invoke(this, message);
+            //MessageReceived?.Invoke(this, message);
+            ProcessBuffer(Encoding.ASCII.GetBytes(recivedMsg), recivedMsg.Length);
         }
 
+        private void ProcessBuffer(byte[] buffer, int length)
+        {
+
+            List<byte>? message = null;
+            for (int i = 0; i < length; i++)
+            {
+                if (buffer[i] == ETX)
+                {
+                    if (message != null)
+                    {
+                        message.Add(buffer[i]);
+                        MessageReceived?.Invoke(this, Encoding.ASCII.GetString(message.ToArray()));
+                        message = null;
+                    }
+                }
+                else if (buffer[i] == STX)
+                {
+                    message = new List<byte>();
+                    message.Add(buffer[i]);
+                }
+                else if (message != null)
+                    message.Add(buffer[i]);
+            }
+        }
         private void SendCallback(IAsyncResult ar)
         {
+
             try
             {
                 // Retrieve the socket from the state object.  
@@ -196,6 +260,8 @@ namespace Communications
             {
                 Console.WriteLine(e.ToString());
             }
+
+
         }
         #endregion
     }
