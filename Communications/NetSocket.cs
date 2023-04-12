@@ -35,7 +35,7 @@ namespace Communications
         public NetSocket()
         {
             _portNumber = 8080;
-            _hostIp = "192.168.16.254";
+            _hostIp = "192.168.1.240";
             Connect();
             stopwatch = new Stopwatch();
         }
@@ -45,7 +45,8 @@ namespace Communications
             _portNumber = portNumber;
             _hostIp = hostIp;
             Connect();
-        }
+			stopwatch = new Stopwatch();
+		}
 
         public void ChangeSetting(ICommunicationSetting setting)
         {
@@ -107,7 +108,7 @@ namespace Communications
                 sendDone.WaitOne(2000);
 
                 Receive(_client);
-                receiveDone.WaitOne();
+                receiveDone.WaitOne(1000);
             }
             catch
             {
