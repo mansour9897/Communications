@@ -12,8 +12,8 @@ namespace Communications
         const char STX = (char)'!';
 
         #region varables
-        private readonly int _portNumber;
-        private readonly string _hostIp;
+        private int _portNumber;
+        private string _hostIp;
         private static Socket? _client;
         public bool IsConnected => _client is null ? false : _client.Connected;
 
@@ -50,7 +50,13 @@ namespace Communications
 
         public void ChangeSetting(ICommunicationSetting setting)
         {
-            throw new NotImplementedException();
+            var set = setting as SocketSetting;
+            
+            if (set is null) return;
+
+            _portNumber = set.Port;
+            _hostIp = set.Ip;
+
         }
 
         public bool Connect()
