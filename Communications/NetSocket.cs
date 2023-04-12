@@ -56,7 +56,7 @@ namespace Communications
 
             _portNumber = set.Port;
             _hostIp = set.Ip;
-
+            Connect();
         }
 
         public bool Connect()
